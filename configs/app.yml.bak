@@ -1,0 +1,6 @@
+profile:
+  botnumber: 628888888888
+  adminnumber: 628898888888
+settings:
+  adminOnly: true
+  prefix: .

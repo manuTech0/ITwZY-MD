@@ -1,0 +1,12 @@
+{
+  "forbidden": "Anda tidak memiliki akses",
+  "plugins": {
+    "index": {
+      "fuzzy": "Perintah tidak ditemukan. Mungkin maksud Anda {{command}}? ({{score}}% kemiripan)"
+    },
+    "ping": {
+      "description": "Untuk cek apakah bot nyala",
+      "pong": "Pong!!"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+	"compilerOptions": {
+		// Environment setup & latest features
+		"lib": ["ES2022", "ES2020"],
+		"target": "ES2022",
+		"module": "NodeNext",
+		"moduleDetection": "force",
+		"jsx": "react-jsx",
+		"allowJs": true,
+ 
+		// Bundler mode
+		"moduleResolution": "Bundler",
+		"allowImportingTsExtensions": false,
+		"verbatimModuleSyntax": true,
+		"noEmit": true,
+
+		// Best practices
+		"strict": true,
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+
+		// Some stricter flags (disabled by default)
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"noPropertyAccessFromIndexSignature": false,
+
+		"rootDir": "./src",
+		"outDir": "./dist"
+	},
+	"include": ["src", "plugins", "t.ts"]
+}
