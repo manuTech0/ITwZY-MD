@@ -1,15 +1,32 @@
-# itwzy-md
+# ITwZY-MD 
 
-To install dependencies:
+WhatsApp bot with @whiskeysockets/baileys v7
+
+## How to setup project:
+### Setup configs
+
+rename .env.example to .env and rename configs/app.yml.bak to configs/app.yml
+
+### Install dependencies 
 
 ```bash
-bun install
+pnpm install
 ```
 
-To run:
+### Build app
+```bash
+pnpm run build
+```
+
+To run dev:
 
 ```bash
-bun run index.ts
+pnpm run dev
 ```
 
-This project was created using `bun init` in bun v1.3.10. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+To run production:
+
+```bash
+pnpm run start
+```
+
