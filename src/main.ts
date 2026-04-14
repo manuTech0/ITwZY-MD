@@ -13,14 +13,14 @@ import makeWASocket, {
 	useMultiFileAuthState,
 } from "@whiskeysockets/baileys";
 import useBaileysAuthState from "baileysauth";
+import type { BaileysAuthState } from "baileysauth/dist/Types";
 import * as QRCode from "qrcode";
 import { appConfig } from "./configs/app.js";
 import { ENV } from "./configs/env.js";
 import { logger } from "./infra/logger.js";
 import { waQueue } from "./queue.js";
-import { validatePhoneNumber } from "./utils/phoneValidator.js";
 import type { MakeWASocket } from "./types/baileys.js";
-import type { BaileysAuthState } from "baileysauth/dist/Types";
+import { validatePhoneNumber } from "./utils/phoneValidator.js";
 
 let sock: MakeWASocket | null = null;
 export async function waSOCK(): Promise<MakeWASocket> {
@@ -34,7 +34,7 @@ export async function waSOCK(): Promise<MakeWASocket> {
 	if (ENV.STATE_TYPE === "db") {
 		stateAuth = await useBaileysAuthState(ENV.DATABASE_URL);
 	} else {
-		stateAuth = await useMultiFileAuthState("state/" + ENV.STATE_PATH);
+		stateAuth = await useMultiFileAuthState(`state/${ENV.STATE_PATH}`);
 	}
 
 	const msgRetryCounterCache = new NodeCache() as CacheStore;
@@ -59,7 +59,6 @@ export async function waSOCK(): Promise<MakeWASocket> {
 			msgRetryCounterCache,
 		});
 	}
-
 
 	sock.ev.on("creds.update", stateAuth.saveCreds);
 	sock.ev.on("connection.update", async (update) => {
@@ -97,7 +96,7 @@ export async function waSOCK(): Promise<MakeWASocket> {
 					}
 				},
 			);
-		} 
+		}
 		if (update.connection === "close") {
 			if (update.lastDisconnect) {
 				const { error, date } = update.lastDisconnect;
@@ -122,6 +121,7 @@ export async function waSOCK(): Promise<MakeWASocket> {
 							`[${date.toISOString()}] Connection Lost and reconnect`,
 						);
 						await delay(5000);
+						sock = null;
 						waSOCK();
 					} else if (status === DisconnectReason.badSession) {
 						logger.warn(`[${date.toISOString()}] bad session`);

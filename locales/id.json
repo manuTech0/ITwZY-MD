@@ -1,12 +1,21 @@
 {
-  "forbidden": "Anda tidak memiliki akses",
-  "plugins": {
-    "index": {
-      "fuzzy": "Perintah tidak ditemukan. Mungkin maksud Anda {{command}}? ({{score}}% kemiripan)"
-    },
-    "ping": {
-      "description": "Untuk cek apakah bot nyala",
-      "pong": "Pong!!"
-    }
-  }
+	"forbidden": "Anda tidak memiliki akses",
+	"plugins": {
+		"index": {
+			"fuzzy": "Perintah tidak ditemukan. Mungkin maksud Anda {{command}}? ({{score}}% kemiripan)"
+		},
+		"ping": {
+			"description": "Untuk cek apakah bot nyala",
+			"pong": "Pong!!"
+		},
+		"system": {
+			"menu": {
+				"description": "Menampilkan informasi bot dan plugins\n\nParameter: \nlist: Menampilan semua plugins\nlist tags: untuk menampilkan plugin sesuai tag nya Example: ```{{prefix}}{{command}} list system,tools``` ",
+				"menu": "ITwZY Bot created By manu\n\nUptime: {{uptime}}\nPrefix: {{prefix}}\nPlugin: {{plugin}}\n\n\n Gunakan {{prefix}}{{command}} list untuk melihat perintah",
+				"commandHead": "┏━━━ «({{tag}})»",
+				"commandBody": "┃ {{prefix}}{{command}} {{args}}",
+				"commandFoot": "┗━━━━"
+			}
+		}
+	}
 }

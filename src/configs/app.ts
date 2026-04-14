@@ -22,7 +22,9 @@ export const AppConfigSchema = z.object({
 	}),
 	settings: z.object({
 		adminOnly: z.coerce.boolean(),
-		prefix: z.coerce.string().default(".")
+		prefix: z.coerce.string().default("."),
+		isolation: z.coerce.boolean().default(true),
+		groupJID: z.coerce.string().optional(),
 	}),
 });
 

@@ -1,10 +1,10 @@
-import id from "../locales/id.json"
+import id from "../locales/id.json";
 
 declare module "i18next" {
-  interface CustomTypeOptions {
-    defaultNS: "translation",
-    resources: {
-      translation: typeof id
-    }
-  }
+	interface CustomTypeOptions {
+		defaultNS: "translation";
+		resources: {
+			translation: typeof id;
+		};
+	}
 }
