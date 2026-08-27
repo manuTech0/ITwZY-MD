@@ -1,10 +1,20 @@
+import { createCampaign } from "./campaign/creator";
+import { startCampaignWorker } from "./campaign/sender";
+import { trackDelivery } from "./campaign/tracker";
 import { loadAppConfig } from "./configs/app";
 import { loadEnv } from "./configs/env";
+import { getDb } from "./infra/db";
 import { logger } from "./infra/logger";
-import { waSOCK } from "./main";
-import { createWorker } from "./queue";
+import { campaignSendQueue } from "./infra/queue";
+import {
+	getClient,
+	onConnectionClose,
+	onConnectionOpen,
+	onRestriction,
+	waSOCK,
+} from "./main";
 import { WhatsAppService } from "./service";
-import { initi18n } from "./utils/i18n";
+import { startMessageWorker } from "./subscribe";
 
 try {
 	loadEnv();
@@ -16,24 +26,87 @@ try {
 try {
 	loadAppConfig();
 } catch (e) {
-	logger.error("Load environment variable failed", undefined, e);
+	logger.error("Load app config failed", undefined, e);
 	process.exit(1);
 }
 
-setInterval(() => {
-	const mem = process.memoryUsage();
+const client = await waSOCK();
+const waService = new WhatsAppService(() => client);
+const worker = await startMessageWorker(waService);
+const campaignWorker = await startCampaignWorker(waService, getClient);
+const wantsCampaign = process.argv.includes("--campaign");
+const wantsBroadcast = process.argv.includes("--broadcast");
 
-	console.log({
-		rss: `${(mem.rss / 1024 / 1024).toFixed(2)} MB`,
-		heapTotal: `${(mem.heapTotal / 1024 / 1024).toFixed(2)} MB`,
-		heapUsed: `${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB`,
-		external: `${(mem.external / 1024 / 1024).toFixed(2)} MB`,
-		arrayBuffers: `${(mem.arrayBuffers / 1024 / 1024).toFixed(2)} MB`,
-	});
-}, 5000);
+trackDelivery(client);
 
-await initi18n();
-const sock = await waSOCK();
-const waService = new WhatsAppService(sock);
-await waService.init();
-createWorker(waService);
+onConnectionClose(() => {
+	logger.warn("Koneksi WhatsApp terputus, worker dipause");
+	void worker.pause();
+	void campaignWorker.pause();
+});
+
+onRestriction(() => {
+	logger.error("Akun direstriksi, worker dipause");
+	void worker.pause();
+	void campaignWorker.pause();
+	const db = getDb();
+	db.prepare(
+		`UPDATE campaigns SET status = 'paused', paused_reason = 'restricted', updated_at = datetime('now')
+		 WHERE status IN ('queued', 'running')`,
+	).run();
+});
+
+onConnectionOpen(async () => {
+	await worker.resume();
+	await campaignWorker.resume();
+
+	if (wantsCampaign) {
+		try {
+			const result = await createCampaign();
+			const db = getDb();
+
+			const campaign = db
+				.prepare(`SELECT message FROM campaigns WHERE id = ?`)
+				.get(result.campaignId) as { message: string } | undefined;
+
+			const recipients = db
+				.prepare(
+					`SELECT id, phone FROM campaign_recipients
+					 WHERE campaign_id = ? AND status = 'pending'`,
+				)
+				.all(result.campaignId) as { id: string; phone: string }[];
+
+			for (const r of recipients) {
+				await campaignSendQueue.add("campaign.send", {
+					campaignId: result.campaignId,
+					recipientId: r.id,
+					phone: r.phone,
+					message: campaign?.message ?? "",
+				});
+			}
+
+			db.prepare(
+				`UPDATE campaigns SET status = 'running', updated_at = datetime('now')
+				 WHERE id = ?`,
+			).run(result.campaignId);
+
+			console.log(
+				`[campaign] "${result.name}" mulai mengirim ${recipients.length} pesan`,
+			);
+		} catch (e) {
+			logger.warn({ err: e }, "Campaign gagal dimulai");
+		}
+	}
+
+	if (wantsBroadcast) {
+		const { enqueueBroadcastFromFiles } = await import("./broadcast");
+		try {
+			await enqueueBroadcastFromFiles();
+		} catch (e) {
+			logger.warn(
+				{ err: e },
+				"Broadcast dilewati (hp.txt/msg.txt tidak tersedia atau gagal dibaca)",
+			);
+		}
+	}
+});

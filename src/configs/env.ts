@@ -1,26 +1,12 @@
 import { z } from "zod";
 
-const commonSchema = z.object({
+const envSchema = z.object({
 	NODE_ENV: z
 		.enum(["development", "production", "test"])
 		.default("development"),
 	REDIS_URL: z.string(),
 	PAIRING_CODE: z.string().transform((val) => val === "true"),
 });
-
-const fileAuthState = commonSchema.extend({
-	STATE_TYPE: z.literal("file"),
-	STATE_PATH: z.string().default("auth_state"),
-});
-const dbAuthState = commonSchema.extend({
-	STATE_TYPE: z.literal("db"),
-	DATABASE_URL: z.string(),
-});
-
-const envSchema = z.discriminatedUnion("STATE_TYPE", [
-	fileAuthState,
-	dbAuthState,
-]);
 
 export type Env = z.infer<typeof envSchema>;
 

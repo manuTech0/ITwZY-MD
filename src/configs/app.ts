@@ -17,14 +17,8 @@ export const isMsFormat = (val: string): val is StringValue => {
 
 export const AppConfigSchema = z.object({
 	profile: z.object({
-		botnumber: z.coerce.string(),
+		wanumber: z.coerce.string(),
 		adminnumber: z.coerce.string(),
-	}),
-	settings: z.object({
-		adminOnly: z.coerce.boolean(),
-		prefix: z.coerce.string().default("."),
-		isolation: z.coerce.boolean().default(true),
-		groupJID: z.coerce.string().optional(),
 	}),
 });
 

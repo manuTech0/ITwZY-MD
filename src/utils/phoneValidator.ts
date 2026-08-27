@@ -23,7 +23,7 @@ export function validatePhoneNumber(phone: string): {
 
 	// Validasi panjang
 	const numberPart = formatted.slice(2);
-	if (numberPart.length < 9 || numberPart.length > 11) {
+	if (numberPart.length < 6 || numberPart.length > 11) {
 		return {
 			valid: false,
 			formatted,

@@ -1,14 +1,9 @@
 // src/lib/server/redis/index.ts
 
-import type { ConnectionOptions } from "bullmq";
 import Redis from "ioredis";
 import { ENV } from "../configs/env";
 
 let redis: Redis | null = null;
-
-export const queueConnection: ConnectionOptions = {
-	url: ENV.REDIS_URL,
-};
 
 export function getRedis(): Redis {
 	if (redis) return redis;
