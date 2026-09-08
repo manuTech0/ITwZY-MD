@@ -1,6 +1,4 @@
 profile:
   botnumber: 6288222358226
-  adminnumber: 6288222358226
-settings:
-  adminOnly: true
-  prefix: .
+webhook:
+  url: http://localhost:4000/wa/events

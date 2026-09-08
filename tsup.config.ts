@@ -1,12 +1,11 @@
 import { defineConfig } from "tsup";
 export default defineConfig({
-	entry: ["src/index.ts"],
+	entry: ["src/bootstrap.ts", "src/api/bootstrap.ts"],
 	format: "esm",
 	target: "node22",
 	clean: true,
 	sourcemap: false,
 	splitting: false,
 	bundle: true,
-	noExternal: ["baileysauth"],
 	external: ["yaml", "libsignal", "crypto"],
 });

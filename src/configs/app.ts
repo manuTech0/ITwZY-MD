@@ -1,31 +1,19 @@
 import { readFileSync } from "node:fs";
-import ms, { type StringValue } from "ms";
 import yaml from "yaml";
 import z from "zod";
 import { ENV } from "./env";
-/* -------------------------------- utils -------------------------------- */
-
-export const isMsFormat = (val: string): val is StringValue => {
-	try {
-		return ms(val as StringValue) !== undefined;
-	} catch {
-		return false;
-	}
-};
 
 /* ------------------------------- schema --------------------------------- */
 
 export const AppConfigSchema = z.object({
 	profile: z.object({
 		botnumber: z.coerce.string(),
-		adminnumber: z.coerce.string(),
 	}),
-	settings: z.object({
-		adminOnly: z.coerce.boolean(),
-		prefix: z.coerce.string().default("."),
-		isolation: z.coerce.boolean().default(true),
-		groupJID: z.coerce.string().optional(),
-	}),
+	webhook: z
+		.object({
+			url: z.string().url(),
+		})
+		.optional(),
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;
@@ -66,10 +54,5 @@ export function loadAppConfig(): AppConfig {
 
 	return Object.freeze(result.data);
 }
-
-export const WEB_VERSION = 1;
-
-// INFO: Ganti ke prodya untuk menonaktifkan stack error dan devya untuk mengaktifkan
-export const isDev: "devya" | "prodya" = "devya";
 
 export const appConfig = loadAppConfig();
