@@ -6,7 +6,9 @@ import { buildApiServer } from "./server";
 const app = await buildApiServer();
 
 try {
-	await app.listen({ port: ENV.API_PORT, host: ENV.API_HOST });
+	const address = await app.listen({ port: ENV.API_PORT, host: ENV.API_HOST });
+	logger.info(`API listening on ${address}`);
+	logger.info(`Routes registered:\n${app.printRoutes()}`);
 } catch (e) {
 	logger.error(e);
 	process.exit(1);

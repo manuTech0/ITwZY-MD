@@ -49,7 +49,9 @@ pnpm run start:api
   (enqueue ke `message.in`, dikirim ke WA oleh process WA).
   `to` boleh nomor (`0812…`/`62812…`, dinormalisasi ke
   `@s.whatsapp.net`) atau JID penuh; tujuan invalid → `400`.
-- `GET /openapi.json` → spec OpenAPI 3.1 (UI interaktif di `/docs`)
+- `GET /openapi.json` → spec OpenAPI 3.1 (UI interaktif di `/docs`).
+  Kontrak webhook keluar ada di section **Webhooks**, bukan di `paths`
+  (lihat "Kontraknya di OpenAPI" di bawah).
 - `POST /messages` juga ada jeda acak kecil (800–2000ms) sebelum
   dikirim ke Baileys agar ritme kirim natural.
 
@@ -122,4 +124,38 @@ WEBHOOK_TOKEN=ubah-token-ini
 - Webhook non-2xx / timeout 10 dtk dianggap gagal → BullMQ retry
   (attempts 3, backoff exponential), lalu status `failed` —
   tidak hilang diam-diam.
+- Delivery bersifat *at-least-once*: `message.id` adalah idempotency key
+  antrean, tapi retry HTTP tetap bisa mengirim event yang sama berulang,
+  jadi receiver wajib idempoten terhadap `message.id`.
+
+### Kontraknya di OpenAPI
+
+Spec OpenAPI 3.1 mendeskripsikan request ini di field `webhooks`
+(`messageOut`), bukan `paths` — karena bridge-lah yang mengirim, bukan
+menerima. Lihat di `/docs` (section **Webhooks**) atau `/openapi.json`:
+
+```jsonc
+{
+  "webhooks": {
+    "messageOut": {
+      "post": {
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "…": "MessageOutEvent" },
+        "responses": { "204": {}, "401": {}, "500": {} }
+      }
+    }
+  }
+}
+```
+
+Sumbernya di `src/api/webhookDocs.ts` (dokumentasi murni, tanpa route/I/O):
+
+- `outboundWebhooks` → root `webhooks` (payload, header, semantik retry).
+- `webhookComponents` → root `components`: schema `MessageOutEvent`,
+  `InboundMessage`, `QuotedRef`, plus `securityScheme` `bearerAuth`.
+- Contoh payload ikut dikunci, dan dikompilasi terhadap tipe `MessageOutEvent`
+  asli — jadi kalau DTO di `src/wa/message.ts` berubah, `tsc` gagal sampai
+  docs-nya di-update. Daftar `enum` `kind` juga terikat ke union `MessageType`
+  lewat `satisfies Record<MessageType, true>`.
+
 

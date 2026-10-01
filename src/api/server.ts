@@ -1,8 +1,10 @@
 import swagger from "@fastify/swagger";
 import scalar from "@scalar/fastify-api-reference";
 import Fastify from "fastify";
+import { logger } from "../infra/logger";
 import type { MessageOutEvent } from "../wa/message";
 import { enqueueSend, forwardToWebhook, startOutboxRelay } from "./gateway";
+import { outboundWebhooks, webhookComponents } from "./webhookDocs";
 
 const sendBodySchema = {
 	type: "object",
@@ -19,17 +21,54 @@ const sendBodySchema = {
 } as const;
 
 export async function buildApiServer() {
-	const app = Fastify();
+	const app = Fastify({ loggerInstance: logger });
 
 	await app.register(swagger, {
 		openapi: {
 			openapi: "3.1.0",
 			info: {
 				title: "ITwZY-MD API",
-				description:
-					"Bridge webhooks ke WhatsApp. Pesan masuk diteruskan ke webhook.url, kirim pesan lewat POST /messages.",
+				description: [
+					"Bridge WhatsApp dua arah. Dua arahnya:",
+					"",
+					"1. **Keluar** — setiap pesan WhatsApp masuk di-forward sebagai `POST` ke `webhook.url` milik Anda. Kontraknya ada di section **Webhooks** (`messageOut`): payload, header, dan semantik retry.",
+					"2. **Masuk** — Anda mengirim pesan lewat `POST /messages` di bawah, dan proses `wa` yang meneruskannya ke WhatsApp.",
+					"",
+					"## Setup sisi penerima (webhook keluar)",
+					"",
+					"Tujuan webhook dibaca dari `configs/app.yml`:",
+					"",
+					"```yaml",
+					"webhook:",
+					"  url: https://tokopedia.example.com/wa/events",
+					"```",
+					"",
+					"Token statis opsional dari `.env` (`WEBHOOK_TOKEN`):",
+					"",
+					"```bash",
+					"WEBHOOK_TOKEN=token-rahasia-anda",
+					"```",
+					"",
+					"Kalau `WEBHOOK_TOKEN` di-set, tiap request membawa `Authorization: Bearer <token>`. Perubahan file butuh restart process `api`.",
+					"",
+					"> Delivery bersifat *at-least-once* dan **tidak** ditandatangani HMAC. Receiver wajib idempoten terhadap `message.id` — detailnya di section Webhooks.",
+				].join("\n"),
 				version: "1.0.0",
 			},
+			tags: [
+				{
+					name: "messages",
+					description: "Kirim pesan WhatsApp dari sistem Anda.",
+				},
+				{
+					name: "webhook",
+					description:
+						"Request yang dikirim bridge ke webhook URL Anda (bukan endpoint yang diekspos proses ini).",
+				},
+				{ name: "system", description: "Health check & spec." },
+			],
+			components: webhookComponents,
+			webhooks: outboundWebhooks,
 		},
 		hideUntagged: true,
 	});
